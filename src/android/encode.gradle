@@ -1,0 +1,3 @@
+dependencies {
+  compile ("net.glxn.qrgen:android:2.0")
+}

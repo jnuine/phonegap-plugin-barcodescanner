@@ -1,0 +1,5 @@
+dependencies {
+  compile ('me.dm7.barcodescanner:zxing:1.7.2') {
+    exclude module: 'support-v4'
+  }
+}
