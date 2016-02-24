@@ -12,15 +12,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
-
-import android.util.Log;
 
 import net.glxn.qrgen.android.QRCode;
 
@@ -51,6 +51,10 @@ public class BarcodeScanner extends CordovaPlugin {
 
     private static final String LOG_TAG = "BarcodeScanner";
 
+    public static final int PERMISSION_DENIED_ERROR = 20;
+    private static final String CAMERA_PERMISSION = Manifest.permission.CAMERA;
+
+    private JSONArray args;
     private CallbackContext callbackContext;
 
     /**
@@ -101,11 +105,50 @@ public class BarcodeScanner extends CordovaPlugin {
                 return true;
             }
         } else if (action.equals(SCAN)) {
-            scan(args);
+            callScan(args);
         } else {
             return false;
         }
         return true;
+    }
+
+    public void onRequestPermissionResult(int requestCode, String[] permissions,
+                                          int[] grantResults) throws JSONException
+    {
+        for(int result:grantResults)
+        {
+            if(result == PackageManager.PERMISSION_DENIED)
+            {
+                this.callbackContext.sendPluginResult(
+                  new PluginResult(
+                    PluginResult.Status.ERROR,
+                    PERMISSION_DENIED_ERROR
+                  )
+                );
+                return;
+            }
+        }
+        switch(requestCode)
+        {
+            case REQUEST_CODE:
+                if (this.args != null) {
+                    scan(this.args);
+                }
+                this.args = null;
+                break;
+        }
+    }
+
+    public void callScan(JSONArray args) {
+        boolean hasScanPermission = cordova.hasPermission(CAMERA_PERMISSION);
+
+        if (!hasScanPermission) {
+            this.args = args;
+            cordova.requestPermission(this, REQUEST_CODE, CAMERA_PERMISSION);
+        }
+        else {
+            scan(args);
+        }
     }
 
     /**
